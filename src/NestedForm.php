@@ -368,9 +368,9 @@ class NestedForm extends Field implements RelatableField
         if ($model->exists) {
             $newRequest = NovaRequest::createFrom($request);
             if (!$model->{$model->getKeyName()} && $request->has($model->getKeyName())) {
-                $model->{$model->getKeyName()} = $request->get($model->getKeyName());
+                $model->{$model->getKeyName()} = $request->input($model->getKeyName());
             }
-            $children = collect($newRequest->get($requestAttribute));
+            $children = collect($newRequest->input($requestAttribute));
             $newRequest->route()->setParameter('resource', $this->resourceName);
             $this->deleteChildren($newRequest, $model, $children);
             $this->createOrUpdateChildren($newRequest, $model, $children, $requestAttribute, $this->getRelatedKeys($newRequest));
