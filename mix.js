@@ -1,5 +1,4 @@
 const mix = require('laravel-mix')
-const webpack = require('webpack')
 const path = require('path')
 
 class NovaExtension {
@@ -11,21 +10,18 @@ class NovaExtension {
         this.name = name
     }
 
-    webpackPlugins() {
-        return new webpack.ProvidePlugin({
-            Errors: 'form-backend-validation',
-        })
-    }
-
     webpackConfig(webpackConfig) {
         webpackConfig.externals = {
             vue: 'Vue',
+            'laravel-nova': 'LaravelNova',
+            'laravel-nova-ui': 'LaravelNovaUi',
+            'laravel-nova-util': 'LaravelNovaUtil',
         }
 
         webpackConfig.resolve.alias = {
             ...(webpackConfig.resolve.alias || {}),
             '@': path.resolve(__dirname, './vendor/laravel/nova/resources/js/'),
-            'laravel-nova': path.join(__dirname, 'vendor/laravel/nova/resources/js/mixins/packages.js'),
+            'uid/single': path.join(__dirname, 'node_modules/uid/single/index.mjs'),
         }
 
         webpackConfig.output = {
@@ -35,14 +31,3 @@ class NovaExtension {
 }
 
 mix.extend('nova', new NovaExtension())
-
-// let mix = require('laravel-mix')
-// let path = require('path')
-//
-// mix
-//     .js('resources/js/field.js', 'js')
-//     .vue({version: 3})
-//     .sourceMaps()
-//     .extract()
-//     .setPublicPath('dist')
-//     .alias({'@': path.join(__dirname, './vendor/laravel/nova/resources/js/')})

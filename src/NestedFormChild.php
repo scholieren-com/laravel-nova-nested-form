@@ -10,12 +10,12 @@ class NestedFormChild extends NestedFormSchema
      *
      * @var string
      */
-    protected static $filterMethod = 'updateFields';
+    protected static string $filterMethod = 'updateFields';
 
     /**
      * Get the current heading.
      */
-    protected function heading()
+    protected function heading(): string
     {
         $heading = isset($this->parentForm->heading) ? $this->parentForm->heading : $this->parentForm::wrapIndex() . '. ' . $this->parentForm->singularLabel;
 

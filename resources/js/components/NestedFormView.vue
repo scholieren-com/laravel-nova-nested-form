@@ -1,14 +1,14 @@
 <template>
-    <nested-form-icon hover-color="info" @click="toggleVisibility">
-        <icon class="cursor-pointer" type="view" viewBox="1 -1.5 20 20"/>
-    </nested-form-icon>
+    <div class="cursor-pointer" @click="toggleVisibility">
+        <Icon :name="iconName" />
+    </div>
 </template>
 
 <script>
-import NestedFormIcon from "./NestedFormIcon";
+import {Icon} from "laravel-nova-ui";
 
 export default {
-    components: {NestedFormIcon},
+    components: { Icon },
 
     props: {
         field: {
@@ -17,6 +17,15 @@ export default {
 
         child: {
             type: Object,
+        },
+    },
+
+    computed: {
+        iconName() {
+            if (this.child) {
+                return this.child.opened ? 'chevron-up' : 'chevron-down';
+            }
+            return 'chevron-down';
         },
     },
 

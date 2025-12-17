@@ -8,10 +8,8 @@ class NestedFormPanel extends Panel
 {
     /**
      * Nested form.
-     *
-     * @var NestedForm
      */
-    protected $nestedForm;
+    protected NestedForm $nestedForm;
 
     /**
      * Constructor.
@@ -28,24 +26,28 @@ class NestedFormPanel extends Panel
     /**
      * Getter.
      */
-    public function __get($key)
+    public function __get($offset): mixed
     {
-        return property_exists($this, $key) ? parent::__get($key) : $this->nestedForm->$key;
+        return property_exists($this, $offset) ? parent::__get($offset) : $this->nestedForm->$offset;
     }
 
     /**
      * Setter.
      */
-    public function __set($key, $value)
+    public function __set($key, $value): void
     {
-        property_exists($this, $key) ? parent::__set($key, $value) : $this->nestedForm->$key = $value;
+        if (property_exists($this, $key)) {
+            $this->$key = $value;
+        } else {
+            $this->nestedForm->$key = $value;
+        }
     }
 
     /**
      * Caller.
      */
-    public function __call($method, $arguments)
+    public function __call($method, $parameters): mixed
     {
-        return method_exists($this, $method) ? parent::__call($method, $arguments) : call_user_func([$this->nestedForm, $method], ...$arguments);
+        return method_exists($this, $method) ? parent::__call($method, $parameters) : call_user_func([$this->nestedForm, $method], ...$parameters);
     }
 }

@@ -1,18 +1,18 @@
 <template>
-  <Icon
-    class="cursor-pointer"
-    type="trash"
+  <div
     v-if="field.children.length > field.min"
-    hover-color="danger"
+    class="cursor-pointer hover:text-red-500"
     @click="removeChild"
-  />
+  >
+    <Icon name="trash" />
+  </div>
 </template>
 
 <script>
-import NestedFormIcon from "./NestedFormIcon";
+import {Icon} from "laravel-nova-ui";
 
 export default {
-  components: { NestedFormIcon },
+  components: { Icon },
 
   props: {
     field: {

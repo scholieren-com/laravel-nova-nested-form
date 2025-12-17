@@ -2,6 +2,8 @@
 
 namespace Handleglobal\NestedForm;
 
+use Closure;
+use Exception;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +24,7 @@ use Laravel\Nova\Http\Requests\NovaRequest;
 use Laravel\Nova\Http\Requests\UpdateResourceRequest;
 use Laravel\Nova\Nova;
 use Laravel\Nova\Panel;
+use ReflectionClass;
 use Symfony\Component\HttpFoundation\FileBag;
 
 class NestedForm extends Field implements RelatableField
@@ -29,31 +32,23 @@ class NestedForm extends Field implements RelatableField
 
     /**
      * Wrap left.
-     *
-     * @var string
      */
-    const WRAP_LEFT = '{{';
+    public const string WRAP_LEFT = '{{';
 
     /**
      * Wrap right.
-     *
-     * @var string
      */
-    const WRAP_RIGHT = '}}';
+    public const string WRAP_RIGHT = '}}';
 
     /**
      * INDEX.
-     *
-     * @var string
      */
-    const INDEX = 'INDEX';
+    public const string INDEX = 'INDEX';
 
     /**
      * ID.
-     *
-     * @var string
      */
-    const ID = 'ID';
+    public const string ID = 'ID';
 
     /**
      * The field's component.
@@ -65,14 +60,14 @@ class NestedForm extends Field implements RelatableField
     /**
      * Indicates if the element should be shown on the index view.
      *
-     * @var \Closure|bool
+     * @var Closure|bool
      */
     public $showOnIndex = false;
 
     /**
      * Indicates if the element should be shown on the detail view.
      *
-     * @var \Closure|bool
+     * @var Closure|bool
      */
     public $showOnDetail = false;
 
@@ -159,12 +154,14 @@ class NestedForm extends Field implements RelatableField
      *
      * @var int
      */
-    public $min = 0;
+    public int $min = 0;
 
     /**
      * Condition to display the nested form.
+     *
+     * @var Closure|null
      */
-    public $displayIfCallback;
+    public ?Closure $displayIfCallback = null;
 
     /**
      * Return context
@@ -200,32 +197,31 @@ class NestedForm extends Field implements RelatableField
     /**
      * Get the relationship name.
      *
-     * @return string
+     * @return string|null
      */
-    public function relationshipName()
+    public function relationshipName(): ?string
     {
-//        return $this->viaRelationship;
+        return $this->viaRelationship;
     }
 
     /**
      * Get the relationship type.
      *
-     * @return string
+     * @return string|null
      */
-    public function relationshipType()
+    public function relationshipType(): ?string
     {
-//        return $this->getRelationshipType();
+        return null;
     }
 
     /**
      * Resolve the form fields.
      *
-     * @param $resource
-     * @param $attribute
-     *
+     * @param mixed $resource
+     * @param string|null $attribute
      * @return void
      */
-    public function resolve($resource, $attribute = null)
+    public function resolve($resource, ?string $attribute = null): void
     {
         $this->withMeta([
             'children' => $this->children($resource),
@@ -328,7 +324,7 @@ class NestedForm extends Field implements RelatableField
     /**
      * Set the condition to display the form.
      */
-    public function displayIf(\Closure $displayIfCallback)
+    public function displayIf(Closure $displayIfCallback)
     {
         $this->displayIfCallback = function () use ($displayIfCallback) {
             return collect(call_user_func($displayIfCallback, $this, app(Novarequest::class)))->map(function ($condition) {
@@ -348,7 +344,7 @@ class NestedForm extends Field implements RelatableField
      */
     protected function getRelationshipType()
     {
-        return (new \ReflectionClass(Nova::modelInstanceForKey($this->viaResource)->{$this->viaRelationship}()))->getShortName();
+        return (new ReflectionClass(Nova::modelInstanceForKey($this->viaResource)->{$this->viaRelationship}()))->getShortName();
     }
 
     /**
@@ -409,7 +405,7 @@ class NestedForm extends Field implements RelatableField
         });
 
         if (!$field) {
-            throw new \Exception(__('A field defining the inverse relationship needs to be set on your related resource (e.g. MorphTo, BelongsTo, BelongsToMany...)'));
+            throw new Exception(__('A field defining the inverse relationship needs to be set on your related resource (e.g. MorphTo, BelongsTo, BelongsToMany...)'));
         }
 
         if ($field instanceof MorphTo) {
@@ -623,7 +619,7 @@ class NestedForm extends Field implements RelatableField
                 'keyName' => $this->keyName,
                 'min' => $this->min,
                 'max' => $this->isManyRelationsip() ? $this->max : 1,
-                'displayIf' => isset($this->displayIfCallback) ? call_user_func($this->displayIfCallback) : null
+                'displayIf' => $this->displayIfCallback !== null ? call_user_func($this->displayIfCallback) : null
             ]
         );
     }

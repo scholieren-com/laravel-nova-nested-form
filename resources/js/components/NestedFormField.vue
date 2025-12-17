@@ -23,22 +23,11 @@
           :class="{ 'overflow-hidden': field.panel && !index, blah: true }"
           v-bind:style="getStyle(childIndex)"
         >
-          <div class="flex gap-1 items-center w-full">
-            <nested-form-header
-              :child="child"
-              :field="field"
-              class="grow"
-              :style="{ width: '97%' }"
-            />
-            <div class="cursor-pointer" @click="child.opened = !child.opened">
-              <div class="opener p-1">
-                <Icon
-                  class="cursor-pointer"
-                  :type="child.opened ? 'chevron-up' : 'chevron-down'"
-                />
-              </div>
-            </div>
-          </div>
+          <nested-form-header
+            :child="child"
+            :field="field"
+            class="w-full"
+          />
 
           <component
             :is="getComponentName(childField)"
@@ -82,7 +71,8 @@
 </template>
 
 <script>
-import { FormField, HandlesValidationErrors } from "laravel-nova";
+import {FormField, HandlesValidationErrors} from "laravel-nova";
+import {reactive} from "vue";
 import NestedFormAdd from "./NestedFormAdd";
 import NestedFormHeader from "./NestedFormHeader";
 
@@ -94,13 +84,15 @@ export default {
     NestedFormHeader,
   },
 
+  emits: ["file-deleted"],
+
   props: {
     resourceName: {
       type: String,
       required: true,
     },
     resourceId: {
-      type: String | Number,
+      type: [String, Number],
       required: true,
     },
     field: {
@@ -109,7 +101,7 @@ export default {
     },
     conditions: {
       type: Object,
-      default: () => ({}),
+      default: () => reactive({}),
     },
     index: {
       type: Number,
@@ -119,6 +111,19 @@ export default {
       type: Number,
     },
   },
+
+  data() {
+    return {
+      localConditions: reactive({}),
+    };
+  },
+
+  computed: {
+    activeConditions() {
+      return { ...this.conditions, ...this.localConditions };
+    },
+  },
+
   methods: {
     getStyle(index) {
       return index ? { borderRadius: 0 } : {};
@@ -186,9 +191,9 @@ export default {
         } = this.field.displayIf[i];
 
         if (attribute) {
-          const values = Object.keys(this.conditions)
+          const values = Object.keys(this.activeConditions)
             .filter((key) => key.match(`^${attribute}$`))
-            .map((key) => this.conditions[key]);
+            .map((key) => this.activeConditions[key]);
 
           if (typeof is !== "undefined") {
             shouldDisplay.push(values.every((v) => v === is));
@@ -223,38 +228,22 @@ export default {
 
       return shouldDisplay.every((should) => should);
     },
+
     /**
-     * Get all the fields of the instance.
+     * Set up watchers for displayIf conditions using Nova's event bus.
      */
-    setAllAttributeWatchers(instance) {
-      if (
-        instance.fieldAttribute &&
-        typeof this.conditions[instance.fieldAttribute] === "undefined"
-      ) {
+    setAllAttributeWatchers() {
+      if (!this.field.displayIf) {
+        return;
+      }
+
+      Nova.$on("field-value-changed", ({ attribute, value }) => {
         this.field.displayIf
-          .filter((field) =>
-            instance.fieldAttribute.match(`^${field.attribute}$`)
-          )
-          .forEach((field) => {
-            const keyToWatch = instance.selectedResourceId
-              ? "selectedResourceId"
-              : "value";
-
-            this.$set(
-              this.conditions,
-              instance.fieldAttribute,
-              instance[keyToWatch]
-            );
-
-            instance.$watch(keyToWatch, (keyToWatch) => {
-              this.$set(this.conditions, instance.fieldAttribute, keyToWatch);
-            });
+          .filter((field) => attribute.match(`^${field.attribute}$`))
+          .forEach(() => {
+            this.localConditions[attribute] = value;
           });
-      }
-
-      if (instance.$children) {
-        instance.$children.map((child) => this.setAllAttributeWatchers(child));
-      }
+      });
     },
 
     /**
@@ -268,7 +257,7 @@ export default {
 
     setConditions() {
       if (this.field.displayIf) {
-        this.setAllAttributeWatchers(this.$root);
+        this.setAllAttributeWatchers();
       }
     },
   },
@@ -285,11 +274,19 @@ export default {
     }
 
     // Mutate the validation key to fix error not showing bug
-    this.field.children.forEach((child) => {
-      child.fields.forEach((field) => {
-        field.validationKey = field.attribute;
+    if (this.field.children) {
+      this.field.children.forEach((child) => {
+        child.fields.forEach((field) => {
+          field.validationKey = field.attribute;
+        });
       });
-    });
+    }
+  },
+
+  beforeUnmount() {
+    if (this.field.displayIf) {
+      Nova.$off("field-value-changed");
+    }
   },
 };
 </script>

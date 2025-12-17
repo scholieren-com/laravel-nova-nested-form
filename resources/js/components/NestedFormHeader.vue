@@ -11,23 +11,21 @@
     "
   >
     <div v-if="heading" v-html="heading" />
-    <div class="flex">
-      <nested-form-view :child="child" class="mx-2" />
-      <nested-form-remove :child="child" :field="field" class="mx-2" />
+    <div class="flex items-center gap-2">
+      <nested-form-remove :child="child" :field="field" />
+      <nested-form-view :child="child" />
     </div>
   </div>
 </template>
 
 <script>
-import NestedFormAdd from "./NestedFormAdd";
 import NestedFormRemove from "./NestedFormRemove";
 import NestedFormView from "./NestedFormView";
 
 export default {
   components: {
-    NestedFormView,
-    NestedFormAdd,
     NestedFormRemove,
+    NestedFormView,
   },
   props: {
     child: {

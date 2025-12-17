@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use JsonSerializable;
 use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\Field;
+use Laravel\Nova\Fields\FieldCollection;
 use Laravel\Nova\Fields\File;
 use Laravel\Nova\Fields\MorphTo;
 use Laravel\Nova\Http\Requests\NovaRequest;
@@ -21,38 +22,49 @@ class NestedFormSchema implements JsonSerializable
      *
      * @var NestedForm
      */
-    protected $parentForm;
+    protected NestedForm $parentForm;
 
     /**
      * Current model instance.
      *
      * @var Model
      */
-    protected $model;
+    protected Model $model;
 
     /**
      * Current index.
      *
      * @var int|string
      */
-    protected $index;
+    protected string|int $index;
 
     /**
      * List of fields.
+     *
+     * @var FieldCollection|array
      */
-    public $fields;
+    public FieldCollection|array $fields;
 
     /**
-     * Name of the fields' fitler method.
+     * Name of the fields' filter method.
      *
      * @var string
      */
-    protected static $filterMethod = 'creationFields';
+    protected static string $filterMethod = 'creationFields';
 
     /**
      * Current request.
+     *
+     * @var NovaRequest
      */
     protected NovaRequest $request;
+
+    /**
+     * Field dependencies for conditional display.
+     *
+     * @var array|null
+     */
+    protected ?array $fieldDependencies = null;
 
     /**
      * Create a new NestedFormSchema instance.
@@ -170,7 +182,7 @@ class NestedFormSchema implements JsonSerializable
     /*
      * Turn an attribute into a nested attribute.
      */
-    protected function attribute(string $attribute = null)
+    protected function attribute(?string $attribute = null): string
     {
         return $this->parentForm->attribute . '[' . $this->index .  ']' . ($attribute ? '[' . $attribute . ']' : '');
     }
@@ -178,9 +190,9 @@ class NestedFormSchema implements JsonSerializable
     /**
      * Get the current heading.
      */
-    protected function heading()
+    protected function heading(): string
     {
-        $heading = isset($this->parentForm->heading) ? $this->parentForm->heading : $this->defaultHeading();
+        $heading = $this->parentForm->heading ?? $this->defaultHeading();
 
         return str_replace($this->parentForm::wrapIndex(), $this->index, $heading);
     }
@@ -188,7 +200,7 @@ class NestedFormSchema implements JsonSerializable
     /**
      * Default heading.
      */
-    protected function defaultHeading()
+    protected function defaultHeading(): string
     {
         return $this->parentForm::wrapIndex() . $this->parentForm->separator . ' ' . $this->parentForm->singularLabel;
     }
@@ -229,7 +241,7 @@ class NestedFormSchema implements JsonSerializable
     /**
      * Create a new NestedFormSchema instance.
      */
-    public static function make(...$arguments)
+    public static function make(...$arguments): static
     {
         return new static(...$arguments);
     }

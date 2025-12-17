@@ -1,18 +1,18 @@
 <template>
-  <Icon
-    type="plus-circle"
-    class="cursor-pointer"
+  <div
     v-if="field.max === 0 || field.children.length < field.max"
-    hover-color="success"
+    class="cursor-pointer hover:text-green-500"
     @click="addChild"
-  />
+  >
+    <Icon name="plus-circle" />
+  </div>
 </template>
 
 <script>
-import NestedFormIcon from "./NestedFormIcon";
+import {Icon} from "laravel-nova-ui";
 
 export default {
-  components: { NestedFormIcon },
+  components: { Icon },
 
   props: {
     field: {
