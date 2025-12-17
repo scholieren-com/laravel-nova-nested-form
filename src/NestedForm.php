@@ -197,9 +197,9 @@ class NestedForm extends Field implements RelatableField
     /**
      * Get the relationship name.
      *
-     * @return string|null
+     * @return string
      */
-    public function relationshipName(): ?string
+    public function relationshipName(): string
     {
         return $this->viaRelationship;
     }
@@ -207,11 +207,11 @@ class NestedForm extends Field implements RelatableField
     /**
      * Get the relationship type.
      *
-     * @return string|null
+     * @return string
      */
-    public function relationshipType(): ?string
+    public function relationshipType(): string
     {
-        return null;
+        return $this->getRelationshipType();
     }
 
     /**
@@ -603,10 +603,23 @@ class NestedForm extends Field implements RelatableField
      *
      * @return array
      */
-    public function jsonSerialize() : array
+    public function jsonSerialize(): array
     {
+
+        $data = parent::jsonSerialize();
+
+
+        if (isset($data['schema'])) {
+            $fields = (is_array($data['schema']->fields)) ? $data['schema']->fields : $data['schema']->fields->toArray();
+
+            foreach ($fields as $key => $item) {
+                $fields[$key]['withLabel'] = true;
+            }
+            $data['schema']->fields = $fields;
+        }
+
         return array_merge(
-            parent::jsonSerialize(),
+            $data,
             [
                 'singularLabel' => $this->singularLabel,
                 'pluralLabel' => $this->pluralLabel,
@@ -619,7 +632,8 @@ class NestedForm extends Field implements RelatableField
                 'keyName' => $this->keyName,
                 'min' => $this->min,
                 'max' => $this->isManyRelationsip() ? $this->max : 1,
-                'displayIf' => $this->displayIfCallback !== null ? call_user_func($this->displayIfCallback) : null
+                'displayIf' => $this->displayIfCallback !== null ? call_user_func($this->displayIfCallback) : null,
+                'withLabel' => true
             ]
         );
     }
